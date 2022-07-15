@@ -1,0 +1,35 @@
+version: "3.9"
+services:
+  monitored-app:
+    restart: on-failure
+    build: ./monitored-app
+    environment:
+      - PROFILE=staging
+    volumes:
+      - ./recordings:/recordings
+    ports:
+      - 8080:8080
+  prometheus:
+    image: prom/prometheus:v2.30.0
+    container_name: prometheus
+    ports:
+      - 2000:9090
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus:/prometheus/
+    stdin_open: true
+    tty: true
+  grafana:
+    image: grafana/grafana:8.1.4
+    container_name: grafana
+    ports:
+      - 3000:3000
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+      - DS_PROMETHEUS=prometheus
+    volumes:
+      - ./grafana/config.ini:/etc/grafana/config.ini
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
